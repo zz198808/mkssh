@@ -1,0 +1,27 @@
+#!/lib/rh80/usr/bin/expect  
+set HOST [ lindex $argv 0 ]
+catch { spawn -noecho ssh -oStrictHostKeyChecking=no $HOST   }
+set timeout 60
+expect {
+    "TimeStr" { 
+        expect {
+            "\\$" {}
+             } 
+        }
+    "\\$" { }
+    timeout { send_user "ssh timed out warting for $HOST\n"; exit 2}
+    "Connection timed out" {exit 3}
+    "efuse" { exit 4 }
+    "close" { exit 5 }
+    "password:" { exit 1 }
+}
+send "ssh-keygen -t rsa\r"
+while { 1 == 1 } {
+   expect {
+        "empty for no passphrase" { send "\r" }
+        "Overwrite" { send "y\r" }
+        "Enter same passphrase again" { send "\r" }
+         "/home/work/.ssh/id_rsa" { send "\r" }
+        "\\$" { send "exit\r"; exit }
+    }
+}
